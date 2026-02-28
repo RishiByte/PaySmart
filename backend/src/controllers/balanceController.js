@@ -1,27 +1,19 @@
-const Expense = require('../models/Expense');
+const { calculateGroupBalances } = require('../services/balance.service');
 
 exports.getGroupBalances = async (req, res) => {
     try {
         const { groupId } = req.params;
 
-        const expenses = await Expense.find({ group: groupId });
+        const balances = await calculateGroupBalances(groupId);
 
-        const balances = {};
-
-        for (const expense of expenses) {
-            const share = expense.amount / expense.participants.length;
-
-            // payer gets money
-            balances[expense.paidBy] = (balances[expense.paidBy] || 0) + expense.amount;
-
-            // participants owe money
-            for (const user of expense.participants) {
-                balances[user] = (balances[user] || 0) - share;
-            }
-        }
-
-        res.json({ balances });
+        res.json({
+            success: true,
+            balances,
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({
+            success: false,
+            error: err.message,
+        });
     }
 };
