@@ -17,4 +17,13 @@ const createUser = async (req, res) => {
   }
 };
 
-module.exports = { createUser };
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({ createdAt: -1 });
+    return res.json(users);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+module.exports = { createUser, getUsers };

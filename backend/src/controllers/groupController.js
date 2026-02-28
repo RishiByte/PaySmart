@@ -41,4 +41,13 @@ const addMember = async (req, res) => {
     }
 };
 
-module.exports = { createGroup, addMember };
+const getGroups = async (req, res) => {
+    try {
+        const groups = await Group.find().sort({ createdAt: -1 });
+        return res.json(groups);
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { createGroup, addMember, getGroups };
