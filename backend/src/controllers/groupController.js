@@ -1,4 +1,5 @@
 const Group = require('../models/Group');
+const Expense = require('../models/Expense');
 
 const createGroup = async (req, res) => {
     try {
@@ -41,4 +42,43 @@ const addMember = async (req, res) => {
     }
 };
 
-module.exports = { createGroup, addMember };
+const getGroupBalances = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        const expenses = await Expense.find({ group: groupId });
+
+        // balance map: positive = owed money, negative = owes money
+        const balances = {};
+
+        // initialise all members to 0
+        group.members.forEach((m) => {
+            balances[m.toString()] = 0;
+        });
+
+        expenses.forEach((expense) => {
+            const payer = expense.paidBy.toString();
+            const share = expense.amount / expense.participants.length;
+
+            // payer is owed the full amount
+            balances[payer] = (balances[payer] || 0) + expense.amount;
+
+            // each participant owes their share
+            expense.participants.forEach((p) => {
+                const pid = p.toString();
+                balances[pid] = (balances[pid] || 0) - share;
+            });
+        });
+
+        return res.json({ groupId, balances });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { createGroup, addMember, getGroupBalances };
