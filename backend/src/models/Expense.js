@@ -23,6 +23,21 @@ const expenseSchema = new mongoose.Schema(
             },
         ],
         description: String,
+        isRecurring: {
+            type: Boolean,
+            default: false,
+        },
+        recurrenceInterval: {
+            type: String,
+            enum: ['daily', 'weekly', 'monthly'],
+        },
+        nextExecutionDate: {
+            type: Date,
+        },
+        sourceExpense: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Expense',
+        },
     },
     { timestamps: true }
 );

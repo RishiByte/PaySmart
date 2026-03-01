@@ -2,15 +2,19 @@ const Expense = require('../models/Expense');
 
 exports.createExpense = async (req, res) => {
     try {
-        const { group, paidBy, amount, participants, description } = req.body;
+        const { group, paidBy, amount, participants, description,
+            isRecurring, recurrenceInterval, nextExecutionDate } = req.body;
 
-        const expense = await Expense.create({
-            group,
-            paidBy,
-            amount,
-            participants,
-            description,
-        });
+        const expenseData = { group, paidBy, amount, participants, description };
+
+        // Add optional recurring fields if provided
+        if (isRecurring) {
+            expenseData.isRecurring = true;
+            expenseData.recurrenceInterval = recurrenceInterval;
+            expenseData.nextExecutionDate = nextExecutionDate;
+        }
+
+        const expense = await Expense.create(expenseData);
 
         res.status(201).json(expense);
     } catch (err) {
