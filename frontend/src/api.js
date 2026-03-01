@@ -27,12 +27,15 @@ export const createGroup = (name, createdBy) =>
 export const getGroups = () =>
     request('GET', '/groups');
 
+export const getGroupById = (groupId) =>
+    request('GET', `/groups/${groupId}`);
+
 export const addMember = (groupId, userId) =>
     request('POST', `/groups/${groupId}/add-member`, { groupId, userId });
 
 // Expenses
-export const createExpense = (group, paidBy, amount, participants, description) =>
-    request('POST', '/expenses', { group, paidBy, amount, participants, description });
+export const createExpense = (data) =>
+    request('POST', '/expenses', data);
 
 export const getExpenses = (groupId) =>
     request('GET', `/expenses?group=${groupId}`);
@@ -40,6 +43,10 @@ export const getExpenses = (groupId) =>
 // Balances
 export const getBalances = (groupId) =>
     request('GET', `/groups/${groupId}/balances`);
+
+// Optimization
+export const getOptimizedBalances = (groupId) =>
+    request('GET', `/groups/${groupId}/optimize`);
 
 // Delete
 export const deleteUser = (id) =>
@@ -50,3 +57,35 @@ export const deleteGroup = (id) =>
 
 export const deleteExpense = (id) =>
     request('DELETE', `/expenses/${id}`);
+
+// ── Phase 2: Recurring Expenses ──
+export const getRecurringExpenses = (groupId) =>
+    request('GET', groupId ? `/recurring-expenses?group=${groupId}` : '/recurring-expenses');
+
+export const triggerRecurringExpenses = () =>
+    request('POST', '/recurring-expenses/trigger');
+
+// ── Phase 2: Partial Payments (Transactions) ──
+export const createTransaction = (fromUser, toUser, groupId, totalAmount) =>
+    request('POST', '/transactions', { fromUser, toUser, groupId, totalAmount });
+
+export const makePayment = (transactionId, amount) =>
+    request('POST', `/transactions/${transactionId}/pay`, { amount });
+
+export const getTransactions = (groupId) =>
+    request('GET', groupId ? `/transactions?groupId=${groupId}` : '/transactions');
+
+// ── Phase 2: Settlement Simulation ──
+export const settleGroup = (groupId) =>
+    request('POST', `/groups/${groupId}/settle`);
+
+export const getSettlementHistory = (groupId) =>
+    request('GET', `/groups/${groupId}/settlements`);
+
+// ── Phase 2: Reduction Metrics ──
+export const getMetrics = (groupId) =>
+    request('GET', `/groups/${groupId}/metrics`);
+
+// ── Phase 2: Debt Graph ──
+export const getDebtGraph = (groupId) =>
+    request('GET', `/groups/${groupId}/debt-graph`);

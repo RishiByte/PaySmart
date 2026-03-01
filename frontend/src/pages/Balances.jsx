@@ -8,7 +8,8 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { Scale, IndianRupee, Users, CheckCircle, BarChart3 } from 'lucide-react';
+import { Scale, IndianRupee, Users, CheckCircle, BarChart3, CreditCard, History, Handshake } from 'lucide-react';
+import { useToast } from '../components/ToastContext';
 import * as api from '../api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
@@ -21,6 +22,17 @@ export default function Balances() {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [balLoading, setBalLoading] = useState(false);
+    const { addToast } = useToast();
+
+    // Partial Payments
+    const [showPayModal, setShowPayModal] = useState(false);
+    const [payTarget, setPayTarget] = useState(null);
+    const [payAmount, setPayAmount] = useState('');
+    const [transactions, setTransactions] = useState([]);
+
+    // Settlement
+    const [settleHistory, setSettleHistory] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -29,6 +41,8 @@ export default function Balances() {
     useEffect(() => {
         if (selectedGroup) {
             loadBalances(selectedGroup);
+            loadTransactions(selectedGroup);
+            loadSettlementHistory(selectedGroup);
         }
     }, [selectedGroup]);
 
@@ -62,10 +76,75 @@ export default function Balances() {
         }
     }
 
+    async function loadTransactions(groupId) {
+        try {
+            const data = await api.getTransactions(groupId);
+            setTransactions(Array.isArray(data) ? data : []);
+        } catch {
+            setTransactions([]);
+        }
+    }
+
+    async function loadSettlementHistory(groupId) {
+        try {
+            const data = await api.getSettlementHistory(groupId);
+            setSettleHistory(data.history || []);
+        } catch {
+            setSettleHistory([]);
+        }
+    }
+
     function getUserName(idOrObj) {
         if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
         const found = users.find((u) => u._id === idOrObj);
         return found?.name || `...${String(idOrObj)?.slice(-6)}`;
+    }
+
+    async function handlePartialPay(balance) {
+        setPayTarget(balance);
+        setPayAmount('');
+        setShowPayModal(true);
+    }
+
+    async function submitPayment() {
+        if (!payTarget || !payAmount || parseFloat(payAmount) <= 0) {
+            addToast('Enter a valid payment amount', 'error');
+            return;
+        }
+
+        try {
+            // Find or create transaction for this debt
+            let tx = transactions.find(
+                (t) => {
+                    const from = typeof t.fromUser === 'object' ? t.fromUser._id : t.fromUser;
+                    const to = typeof t.toUser === 'object' ? t.toUser._id : t.toUser;
+                    return from === payTarget.from && to === payTarget.to && t.status !== 'completed';
+                }
+            );
+
+            if (!tx) {
+                tx = await api.createTransaction(payTarget.from, payTarget.to, selectedGroup, payTarget.amount);
+            }
+
+            await api.makePayment(tx._id, parseFloat(payAmount));
+            addToast(`Payment of ₹${payAmount} recorded!`);
+            setShowPayModal(false);
+            loadTransactions(selectedGroup);
+        } catch (err) {
+            addToast(err.message, 'error');
+        }
+    }
+
+    async function handleSettleGroup() {
+        if (!confirm('Settle all debts in this group? This marks all current debts as settled.')) return;
+        try {
+            const result = await api.settleGroup(selectedGroup);
+            addToast(result.message || 'Group settled!');
+            loadSettlementHistory(selectedGroup);
+            loadBalances(selectedGroup);
+        } catch (err) {
+            addToast(err.message, 'error');
+        }
     }
 
     const netMap = {};
@@ -134,6 +213,23 @@ export default function Balances() {
 
     const totalSettled = balances.reduce((s, t) => s + t.amount, 0);
 
+    // Get payment progress for a balance
+    function getPaymentProgress(balance) {
+        const tx = transactions.find(
+            (t) => {
+                const from = typeof t.fromUser === 'object' ? t.fromUser._id : t.fromUser;
+                const to = typeof t.toUser === 'object' ? t.toUser._id : t.toUser;
+                return from === balance.from && to === balance.to;
+            }
+        );
+        if (!tx) return { paidAmount: 0, remainingAmount: balance.amount, percentage: 0 };
+        return {
+            paidAmount: tx.paidAmount,
+            remainingAmount: tx.remainingAmount,
+            percentage: Math.round((tx.paidAmount / tx.totalAmount) * 100),
+        };
+    }
+
     if (loading) return <div className="spinner" />;
 
     return (
@@ -161,15 +257,93 @@ export default function Balances() {
                 </div>
             </div>
 
-            <div className="form-group" style={{ maxWidth: 360, marginBottom: 28 }}>
-                <label>Select Group</label>
-                <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)}>
-                    <option value="">Choose a group</option>
-                    {groups.map((g) => (
-                        <option key={g._id} value={g._id}>{g.name}</option>
-                    ))}
-                </select>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end', marginBottom: 28 }}>
+                <div className="form-group" style={{ maxWidth: 360, marginBottom: 0 }}>
+                    <label>Select Group</label>
+                    <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)}>
+                        <option value="">Choose a group</option>
+                        {groups.map((g) => (
+                            <option key={g._id} value={g._id}>{g.name}</option>
+                        ))}
+                    </select>
+                </div>
+                {selectedGroup && balances.length > 0 && (
+                    <button className="btn btn-primary" onClick={handleSettleGroup} style={{ whiteSpace: 'nowrap' }}>
+                        <Handshake size={16} /> Settle Group
+                    </button>
+                )}
+                {selectedGroup && settleHistory.length > 0 && (
+                    <button className="btn btn-secondary" onClick={() => setShowHistory(!showHistory)} style={{ whiteSpace: 'nowrap' }}>
+                        <History size={16} /> {showHistory ? 'Hide' : 'Show'} History
+                    </button>
+                )}
             </div>
+
+            {/* Settlement History Modal */}
+            {showHistory && settleHistory.length > 0 && (
+                <div className="card" style={{ marginBottom: 24, animation: 'slideUp 0.3s ease' }}>
+                    <h3 className="section-title">
+                        <History size={18} /> Settlement History
+                        <span className="item-badge badge-green" style={{ marginLeft: 8 }}>
+                            {settleHistory.length}
+                        </span>
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {settleHistory.map((record, ri) => (
+                            <div key={record._id} className="card" style={{ padding: 16 }}>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
+                                    Settled on {new Date(record.settledAt).toLocaleDateString()} at {new Date(record.settledAt).toLocaleTimeString()}
+                                </div>
+                                {record.settlements.map((s, si) => (
+                                    <div key={si} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', fontSize: 14 }}>
+                                        <span style={{ color: 'var(--danger)', fontWeight: 600 }}>{getUserName(s.fromUser)}</span>
+                                        <span style={{ color: 'var(--text-muted)' }}>→</span>
+                                        <span style={{ color: 'var(--success)', fontWeight: 600 }}>{getUserName(s.toUser)}</span>
+                                        <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--accent)' }}>₹{s.amount}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Pay Modal */}
+            {showPayModal && payTarget && (
+                <div className="modal-overlay" onClick={() => setShowPayModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3 style={{ marginBottom: 16 }}>Record Payment</h3>
+                        <div style={{ marginBottom: 12, fontSize: 14, color: 'var(--text-secondary)' }}>
+                            <span style={{ fontWeight: 600 }}>{getUserName(payTarget.from)}</span> pays{' '}
+                            <span style={{ fontWeight: 600 }}>{getUserName(payTarget.to)}</span>
+                        </div>
+                        <div style={{ marginBottom: 16, fontSize: 13, color: 'var(--text-muted)' }}>
+                            Total: ₹{payTarget.amount}
+                        </div>
+                        <div className="form-group">
+                            <label>Payment Amount</label>
+                            <input
+                                type="number"
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01"
+                                max={payTarget.amount}
+                                value={payAmount}
+                                onChange={(e) => setPayAmount(e.target.value)}
+                                autoFocus
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn btn-primary" onClick={submitPayment}>
+                                <CreditCard size={16} /> Pay
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => setShowPayModal(false)}>
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {!selectedGroup ? (
                 <div className="card empty-state" style={{ maxWidth: 500 }}>
@@ -189,30 +363,59 @@ export default function Balances() {
                             </div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                {balances.map((t, i) => (
-                                    <div
-                                        key={i}
-                                        className="settlement-card"
-                                        style={{ animationDelay: `${i * 0.08}s` }}
-                                    >
-                                        <div className="user-from">
-                                            <div style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600, marginBottom: 4 }}>
-                                                PAYS
+                                {balances.map((t, i) => {
+                                    const progress = getPaymentProgress(t);
+                                    return (
+                                        <div
+                                            key={i}
+                                            className="settlement-card"
+                                            style={{ animationDelay: `${i * 0.08}s`, flexDirection: 'column', gap: 12 }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%' }}>
+                                                <div className="user-from">
+                                                    <div style={{ fontSize: 12, color: 'var(--danger)', fontWeight: 600, marginBottom: 4 }}>
+                                                        PAYS
+                                                    </div>
+                                                    <div className="user-name">{getUserName(t.from)}</div>
+                                                </div>
+                                                <div className="arrow">
+                                                    <div className="arrow-amount">{t.amount}</div>
+                                                    <div className="arrow-line" />
+                                                </div>
+                                                <div className="user-to">
+                                                    <div style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600, marginBottom: 4 }}>
+                                                        RECEIVES
+                                                    </div>
+                                                    <div className="user-name">{getUserName(t.to)}</div>
+                                                </div>
                                             </div>
-                                            <div className="user-name">{getUserName(t.from)}</div>
-                                        </div>
-                                        <div className="arrow">
-                                            <div className="arrow-amount">{t.amount}</div>
-                                            <div className="arrow-line" />
-                                        </div>
-                                        <div className="user-to">
-                                            <div style={{ fontSize: 12, color: 'var(--success)', fontWeight: 600, marginBottom: 4 }}>
-                                                RECEIVES
+
+                                            {/* Payment progress + button */}
+                                            <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <div className="progress-bar-container">
+                                                        <div
+                                                            className="progress-bar-fill"
+                                                            style={{ width: `${progress.percentage}%` }}
+                                                        />
+                                                    </div>
+                                                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                                                        {progress.paidAmount > 0
+                                                            ? `₹${progress.paidAmount} paid · ₹${progress.remainingAmount} remaining`
+                                                            : 'No payments yet'}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    className="btn btn-secondary btn-sm"
+                                                    onClick={() => handlePartialPay(t)}
+                                                    title="Make partial payment"
+                                                >
+                                                    <CreditCard size={14} /> Pay
+                                                </button>
                                             </div>
-                                            <div className="user-name">{getUserName(t.to)}</div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
