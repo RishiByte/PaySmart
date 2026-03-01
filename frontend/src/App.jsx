@@ -5,6 +5,8 @@ import Users from './pages/Users';
 import Groups from './pages/Groups';
 import Expenses from './pages/Expenses';
 import Balances from './pages/Balances';
+import Metrics from './pages/Metrics';
+import DebtGraph from './pages/DebtGraph';
 import Toast from './components/Toast';
 import { ToastProvider } from './components/ToastContext';
 import './index.css';
@@ -22,6 +24,8 @@ export default function App() {
               <Route path="/groups" element={<Groups />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/balances" element={<Balances />} />
+              <Route path="/metrics" element={<Metrics />} />
+              <Route path="/debt-graph" element={<DebtGraph />} />
             </Routes>
           </main>
           <Toast />

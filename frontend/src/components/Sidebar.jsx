@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Home, Receipt, Scale, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Users, Home, Receipt, Scale, Sun, Moon, TrendingDown, Network } from 'lucide-react';
 import './Sidebar.css';
 
 const navItems = [
@@ -9,6 +9,8 @@ const navItems = [
     { path: '/groups', icon: Home, label: 'Groups' },
     { path: '/expenses', icon: Receipt, label: 'Expenses' },
     { path: '/balances', icon: Scale, label: 'Balances' },
+    { path: '/metrics', icon: TrendingDown, label: 'Metrics' },
+    { path: '/debt-graph', icon: Network, label: 'Debt Graph' },
 ];
 
 export default function Sidebar() {

@@ -7,7 +7,7 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useToast } from '../components/ToastContext';
-import { Receipt, ArrowUp, FileText, Trash2, Plus } from 'lucide-react';
+import { Receipt, ArrowUp, FileText, Trash2, Plus, RefreshCw } from 'lucide-react';
 import * as api from '../api';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -25,6 +25,10 @@ export default function Expenses() {
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(true);
     const { addToast } = useToast();
+
+    // Recurring fields
+    const [isRecurring, setIsRecurring] = useState(false);
+    const [recurrenceInterval, setRecurrenceInterval] = useState('monthly');
 
     useEffect(() => {
         loadData();
@@ -79,18 +83,28 @@ export default function Expenses() {
             return addToast('Fill all fields and select participants', 'error');
 
         try {
-            await api.createExpense(
-                selectedGroup,
+            const expenseData = {
+                group: selectedGroup,
                 paidBy,
-                parseFloat(amount),
+                amount: parseFloat(amount),
                 participants,
-                description.trim()
-            );
-            addToast('Expense added!');
+                description: description.trim(),
+            };
+
+            if (isRecurring) {
+                expenseData.isRecurring = true;
+                expenseData.recurrenceInterval = recurrenceInterval;
+                expenseData.nextExecutionDate = new Date().toISOString();
+            }
+
+            await api.createExpense(expenseData);
+
+            addToast(isRecurring ? 'Recurring expense added!' : 'Expense added!');
             setAmount('');
             setDescription('');
             setParticipants([]);
             setPaidBy('');
+            setIsRecurring(false);
             loadExpenses(selectedGroup);
         } catch (err) {
             addToast(err.message, 'error');
@@ -227,6 +241,29 @@ export default function Expenses() {
                                 </div>
                             </div>
 
+                            {/* Recurring Toggle */}
+                            <div className="form-group">
+                                <div className="recurring-toggle" onClick={() => setIsRecurring(!isRecurring)}>
+                                    <div className={`toggle-switch ${isRecurring ? 'active' : ''}`}>
+                                        <div className="toggle-knob" />
+                                    </div>
+                                    <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                                        <RefreshCw size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                                        Recurring Expense
+                                    </span>
+                                </div>
+                                {isRecurring && (
+                                    <div style={{ marginTop: 10 }}>
+                                        <label>Interval</label>
+                                        <select value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(e.target.value)}>
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+
                             <button type="submit" className="btn btn-primary"><Plus size={16} /> Add Expense</button>
                         </form>
                     </div>
@@ -267,7 +304,14 @@ export default function Expenses() {
                                 <div key={e._id} className="item-card">
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div>
-                                            <div className="item-name">{e.description || 'Untitled'}</div>
+                                            <div className="item-name">
+                                                {e.description || 'Untitled'}
+                                                {e.isRecurring && (
+                                                    <span className="item-badge badge-recurring" style={{ marginLeft: 8 }}>
+                                                        <RefreshCw size={11} /> {e.recurrenceInterval}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="item-detail">
                                                 Paid by <strong>{getUserName(e.paidBy)}</strong> · Split among {e.participants?.length} people
                                             </div>
