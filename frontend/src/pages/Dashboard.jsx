@@ -14,7 +14,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const COLORS = ['#6366f1', '#06b6d4', '#a855f7', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 
 export default function Dashboard() {
-    const [stats, setStats] = useState({ users: 0, groups: 0, expenses: [], totalAmount: 0 });
+    const [stats, setStats] = useState({ users: [], groups: 0, expenses: [], totalAmount: 0 });
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -34,7 +34,7 @@ export default function Dashboard() {
 
                 const totalAmount = allExpenses.reduce((s, e) => s + e.amount, 0);
                 setStats({
-                    users: Array.isArray(users) ? users.length : 0,
+                    users: Array.isArray(users) ? users : [],
                     groups: Array.isArray(groups) ? groups.length : 0,
                     expenses: allExpenses,
                     totalAmount,
@@ -48,15 +48,23 @@ export default function Dashboard() {
         load();
     }, []);
 
+    function getUserName(idOrObj) {
+        // Handle populated object
+        if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
+        // Fallback: look up in users array
+        const found = stats.users.find((u) => u._id === idOrObj);
+        return found?.name || `...${String(idOrObj)?.slice(-6)}`;
+    }
+
     // Doughnut chart: expenses by payer
     const payerMap = {};
     stats.expenses.forEach((e) => {
-        const id = e.paidBy;
-        payerMap[id] = (payerMap[id] || 0) + e.amount;
+        const name = getUserName(e.paidBy);
+        payerMap[name] = (payerMap[name] || 0) + e.amount;
     });
 
     const chartData = {
-        labels: Object.keys(payerMap).map((id) => id.slice(-6)),
+        labels: Object.keys(payerMap),
         datasets: [
             {
                 data: Object.values(payerMap),
@@ -90,7 +98,7 @@ export default function Dashboard() {
             <div className="stats-grid">
                 <div className="stat-card" onClick={() => navigate('/users')} style={{ cursor: 'pointer' }}>
                     <div className="stat-icon purple">👥</div>
-                    <div className="stat-value">{stats.users}</div>
+                    <div className="stat-value">{stats.users.length}</div>
                     <div className="stat-label">Total Users</div>
                 </div>
                 <div className="stat-card" onClick={() => navigate('/groups')} style={{ cursor: 'pointer' }}>
@@ -124,7 +132,7 @@ export default function Dashboard() {
                                 <div key={e._id} className="item-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
                                         <div className="item-name">{e.description || 'Expense'}</div>
-                                        <div className="item-detail">Paid by: ...{e.paidBy?.slice(-6)}</div>
+                                        <div className="item-detail">Paid by: {getUserName(e.paidBy)}</div>
                                     </div>
                                     <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent-light)' }}>
                                         ₹{e.amount}

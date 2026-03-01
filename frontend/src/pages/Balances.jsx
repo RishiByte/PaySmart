@@ -61,17 +61,22 @@ export default function Balances() {
         }
     }
 
-    function getUserName(id) {
-        return users.find((u) => u._id === id)?.name || `...${id?.slice(-6)}`;
+    function getUserName(idOrObj) {
+        // Handle populated object
+        if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
+        // Fallback: look up in users array
+        const found = users.find((u) => u._id === idOrObj);
+        return found?.name || `...${String(idOrObj)?.slice(-6)}`;
     }
 
     // Compute net balances per user for bar chart
     const netMap = {};
     expenses.forEach((e) => {
         const payerName = getUserName(e.paidBy);
-        const share = e.amount / (e.participants?.length || 1);
+        const participantList = e.participants || [];
+        const share = e.amount / (participantList.length || 1);
         netMap[payerName] = (netMap[payerName] || 0) + e.amount;
-        (e.participants || []).forEach((p) => {
+        participantList.forEach((p) => {
             const pName = getUserName(p);
             netMap[pName] = (netMap[pName] || 0) - share;
         });

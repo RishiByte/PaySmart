@@ -43,11 +43,24 @@ const addMember = async (req, res) => {
 
 const getGroups = async (req, res) => {
     try {
-        const groups = await Group.find().sort({ createdAt: -1 });
+        const groups = await Group.find()
+            .populate('members', 'name email')
+            .populate('createdBy', 'name email')
+            .sort({ createdAt: -1 });
         return res.json(groups);
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
 };
 
-module.exports = { createGroup, addMember, getGroups };
+const deleteGroup = async (req, res) => {
+    try {
+        const group = await Group.findByIdAndDelete(req.params.id);
+        if (!group) return res.status(404).json({ error: 'Group not found' });
+        return res.status(200).json({ message: 'Group deleted' });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { createGroup, addMember, getGroups, deleteGroup };

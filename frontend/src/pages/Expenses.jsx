@@ -55,8 +55,17 @@ export default function Expenses() {
         }
     }
 
-    function getUserName(id) {
-        return users.find((u) => u._id === id)?.name || `...${id?.slice(-6)}`;
+    function getUserName(idOrObj) {
+        // Handle populated object (from backend .populate())
+        if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
+        // Fallback: look up in users array
+        const found = users.find((u) => u._id === idOrObj);
+        return found?.name || `...${String(idOrObj)?.slice(-6)}`;
+    }
+
+    function getUserId(idOrObj) {
+        if (idOrObj && typeof idOrObj === 'object') return idOrObj._id;
+        return idOrObj;
     }
 
     function toggleParticipant(userId) {
@@ -83,6 +92,18 @@ export default function Expenses() {
             setDescription('');
             setParticipants([]);
             setPaidBy('');
+            loadExpenses(selectedGroup);
+        } catch (err) {
+            addToast(err.message, 'error');
+        }
+    }
+
+    async function handleDelete(expense) {
+        const desc = expense.description || 'this expense';
+        if (!confirm(`Delete "${desc}"? This cannot be undone.`)) return;
+        try {
+            await api.deleteExpense(expense._id);
+            addToast(`Expense "${desc}" deleted`);
             loadExpenses(selectedGroup);
         } catch (err) {
             addToast(err.message, 'error');
@@ -122,7 +143,12 @@ export default function Expenses() {
     // Get members of selected group for participant list
     const currentGroup = groups.find((g) => g._id === selectedGroup);
     const groupMembers = currentGroup
-        ? users.filter((u) => currentGroup.members?.includes(u._id))
+        ? users.filter((u) => {
+            const memberIds = (currentGroup.members || []).map((m) =>
+                typeof m === 'object' ? m._id : m
+            );
+            return memberIds.includes(u._id);
+        })
         : users;
 
     if (loading) return <div className="spinner" />;
@@ -250,8 +276,17 @@ export default function Expenses() {
                                                 Paid by <strong>{getUserName(e.paidBy)}</strong> · Split among {e.participants?.length} people
                                             </div>
                                         </div>
-                                        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent-light)' }}>
-                                            ₹{e.amount}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent-light)' }}>
+                                                ₹{e.amount}
+                                            </div>
+                                            <button
+                                                className="btn btn-danger btn-sm"
+                                                onClick={() => handleDelete(e)}
+                                                title="Delete expense"
+                                            >
+                                                🗑️
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

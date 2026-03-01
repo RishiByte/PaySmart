@@ -44,6 +44,17 @@ export default function Users() {
         }
     }
 
+    async function handleDelete(user) {
+        if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
+        try {
+            await api.deleteUser(user._id);
+            addToast(`User "${user.name}" deleted`);
+            loadUsers();
+        } catch (err) {
+            addToast(err.message, 'error');
+        }
+    }
+
     if (loading) return <div className="spinner" />;
 
     return (
@@ -103,10 +114,17 @@ export default function Users() {
                                     >
                                         {u.name?.charAt(0)?.toUpperCase()}
                                     </div>
-                                    <div>
+                                    <div style={{ flex: 1 }}>
                                         <div className="item-name">{u.name}</div>
                                         <div className="item-detail">{u.email || 'No email'}</div>
                                     </div>
+                                    <button
+                                        className="btn btn-danger btn-sm"
+                                        onClick={() => handleDelete(u)}
+                                        title="Delete user"
+                                    >
+                                        🗑️
+                                    </button>
                                 </div>
                             ))}
                         </div>
