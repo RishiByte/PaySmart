@@ -257,10 +257,10 @@ Deliverables:
 # 12. Demo & Video
 
 Live Demo Link:
-(Add link here)
+https://vercel.com/rishi-bhardwajs-projects-b48ff5c6/pay-smart-fcnm/434uBGevDFBuoSRbNmw2SHwcWSML
 
 Demo Video Link:
-(Add link here)
+https://drive.google.com/file/d/11SdNYRbWwYrLPzB0ra4vAw_SEk7N3ttx/view?usp=sharing
 
 GitHub Repository:
 https://github.com/RishiByte/PaySmart
