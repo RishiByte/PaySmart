@@ -40,3 +40,13 @@ export const getExpenses = (groupId) =>
 // Balances
 export const getBalances = (groupId) =>
     request('GET', `/groups/${groupId}/balances`);
+
+// Delete
+export const deleteUser = (id) =>
+    request('DELETE', `/users/${id}`);
+
+export const deleteGroup = (id) =>
+    request('DELETE', `/groups/${id}`);
+
+export const deleteExpense = (id) =>
+    request('DELETE', `/expenses/${id}`);

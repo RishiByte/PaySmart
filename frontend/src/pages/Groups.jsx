@@ -58,8 +58,22 @@ export default function Groups() {
         }
     }
 
-    function getUserName(id) {
-        return users.find((u) => u._id === id)?.name || id?.slice(-6);
+    async function handleDelete(group) {
+        if (!confirm(`Delete group "${group.name}"? This cannot be undone.`)) return;
+        try {
+            await api.deleteGroup(group._id);
+            addToast(`Group "${group.name}" deleted`);
+            loadData();
+        } catch (err) {
+            addToast(err.message, 'error');
+        }
+    }
+
+    function getUserName(member) {
+        // member can be a populated object or a raw ID string
+        if (member && typeof member === 'object' && member.name) return member.name;
+        const found = users.find((u) => u._id === member);
+        return found?.name || `...${String(member)?.slice(-6)}`;
     }
 
     if (loading) return <div className="spinner" />;
@@ -142,12 +156,23 @@ export default function Groups() {
                         <div className="items-grid">
                             {groups.map((g) => (
                                 <div key={g._id} className="item-card">
-                                    <div className="item-name">{g.name}</div>
-                                    <div className="item-detail">Created by: {getUserName(g.createdBy)}</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <div className="item-name">{g.name}</div>
+                                            <div className="item-detail">Created by: {getUserName(g.createdBy)}</div>
+                                        </div>
+                                        <button
+                                            className="btn btn-danger btn-sm"
+                                            onClick={() => handleDelete(g)}
+                                            title="Delete group"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
                                     <div className="avatar-stack">
                                         {(g.members || []).slice(0, 5).map((m, i) => (
                                             <div
-                                                key={m}
+                                                key={typeof m === 'object' ? m._id : m}
                                                 className="avatar"
                                                 style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
                                                 title={getUserName(m)}
