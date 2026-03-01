@@ -8,6 +8,7 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { Scale, IndianRupee, Users, CheckCircle, BarChart3 } from 'lucide-react';
 import * as api from '../api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
@@ -62,14 +63,11 @@ export default function Balances() {
     }
 
     function getUserName(idOrObj) {
-        // Handle populated object
         if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
-        // Fallback: look up in users array
         const found = users.find((u) => u._id === idOrObj);
         return found?.name || `...${String(idOrObj)?.slice(-6)}`;
     }
 
-    // Compute net balances per user for bar chart
     const netMap = {};
     expenses.forEach((e) => {
         const payerName = getUserName(e.paidBy);
@@ -82,7 +80,6 @@ export default function Balances() {
         });
     });
 
-    // Round
     Object.keys(netMap).forEach((k) => {
         netMap[k] = Math.round(netMap[k] * 100) / 100;
     });
@@ -94,10 +91,10 @@ export default function Balances() {
         labels: barLabels,
         datasets: [
             {
-                label: 'Net Balance (₹)',
+                label: 'Net Balance',
                 data: barValues,
                 backgroundColor: barValues.map((v) =>
-                    v >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(239, 68, 68, 0.7)'
+                    v >= 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'
                 ),
                 borderColor: barValues.map((v) =>
                     v >= 0 ? '#10b981' : '#ef4444'
@@ -115,22 +112,22 @@ export default function Balances() {
             legend: { display: false },
             tooltip: {
                 callbacks: {
-                    label: (ctx) => `₹${ctx.raw}`,
+                    label: (ctx) => `${ctx.raw}`,
                 },
             },
         },
         scales: {
             x: {
-                ticks: { color: '#9ca3c7', font: { family: 'Inter', size: 12 } },
-                grid: { color: 'rgba(99, 102, 241, 0.06)' },
+                ticks: { color: 'var(--text-secondary)', font: { family: 'Inter', size: 12 } },
+                grid: { color: 'var(--border)' },
             },
             y: {
                 ticks: {
-                    color: '#9ca3c7',
+                    color: 'var(--text-secondary)',
                     font: { family: 'Inter', size: 12 },
-                    callback: (v) => `₹${v}`,
+                    callback: (v) => `${v}`,
                 },
-                grid: { color: 'rgba(99, 102, 241, 0.06)' },
+                grid: { color: 'var(--border)' },
             },
         },
     };
@@ -148,17 +145,17 @@ export default function Balances() {
 
             <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                 <div className="stat-card">
-                    <div className="stat-icon purple">⚖️</div>
+                    <div className="stat-icon indigo"><Scale /></div>
                     <div className="stat-value">{balances.length}</div>
                     <div className="stat-label">Transactions</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon green">💰</div>
-                    <div className="stat-value">₹{totalSettled.toLocaleString()}</div>
+                    <div className="stat-icon green"><IndianRupee /></div>
+                    <div className="stat-value">{totalSettled.toLocaleString()}</div>
                     <div className="stat-label">To Settle</div>
                 </div>
                 <div className="stat-card">
-                    <div className="stat-icon cyan">👥</div>
+                    <div className="stat-icon cyan"><Users /></div>
                     <div className="stat-value">{barLabels.length}</div>
                     <div className="stat-label">Users Involved</div>
                 </div>
@@ -176,7 +173,7 @@ export default function Balances() {
 
             {!selectedGroup ? (
                 <div className="card empty-state" style={{ maxWidth: 500 }}>
-                    <div className="empty-icon">⚖️</div>
+                    <div className="empty-icon"><Scale /></div>
                     <p>Select a group to view settlements</p>
                 </div>
             ) : balLoading ? (
@@ -187,7 +184,7 @@ export default function Balances() {
                         <h3 className="section-title">Settlement Transactions</h3>
                         {balances.length === 0 ? (
                             <div className="card empty-state">
-                                <div className="empty-icon">✅</div>
+                                <div className="empty-icon"><CheckCircle /></div>
                                 <p>All settled! No outstanding debts.</p>
                             </div>
                         ) : (
@@ -205,7 +202,7 @@ export default function Balances() {
                                             <div className="user-name">{getUserName(t.from)}</div>
                                         </div>
                                         <div className="arrow">
-                                            <div className="arrow-amount">₹{t.amount}</div>
+                                            <div className="arrow-amount">{t.amount}</div>
                                             <div className="arrow-line" />
                                         </div>
                                         <div className="user-to">
@@ -229,7 +226,7 @@ export default function Balances() {
                                 </div>
                             ) : (
                                 <div className="empty-state">
-                                    <div className="empty-icon">📊</div>
+                                    <div className="empty-icon"><BarChart3 /></div>
                                     <p>No data to display</p>
                                 </div>
                             )}
@@ -238,7 +235,7 @@ export default function Balances() {
                             <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>
                                 Algorithm
                             </div>
-                            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent-light)', marginTop: 4 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--accent)', marginTop: 4 }}>
                                 Greedy Debt Minimization · O(U log U)
                             </div>
                         </div>

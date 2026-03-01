@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../components/ToastContext';
+import { Plus, Trash2, UserPlus, Home } from 'lucide-react';
 import * as api from '../api';
 
-const AVATAR_COLORS = ['#6366f1', '#06b6d4', '#a855f7', '#ec4899', '#f59e0b', '#10b981'];
+const AVATAR_COLORS = ['#6366f1', '#06b6d4', '#7c3aed', '#ec4899', '#f59e0b', '#10b981'];
 
 export default function Groups() {
     const [groups, setGroups] = useState([]);
@@ -70,7 +71,6 @@ export default function Groups() {
     }
 
     function getUserName(member) {
-        // member can be a populated object or a raw ID string
         if (member && typeof member === 'object' && member.name) return member.name;
         const found = users.find((u) => u._id === member);
         return found?.name || `...${String(member)?.slice(-6)}`;
@@ -109,7 +109,7 @@ export default function Groups() {
                                     ))}
                                 </select>
                             </div>
-                            <button type="submit" className="btn btn-primary">➕ Create Group</button>
+                            <button type="submit" className="btn btn-primary"><Plus size={16} /> Create Group</button>
                         </form>
                     </div>
 
@@ -135,7 +135,7 @@ export default function Groups() {
                                     ))}
                                 </select>
                             </div>
-                            <button type="submit" className="btn btn-primary">👤 Add Member</button>
+                            <button type="submit" className="btn btn-primary"><UserPlus size={16} /> Add Member</button>
                         </form>
                     </div>
                 </div>
@@ -149,7 +149,7 @@ export default function Groups() {
                     </h3>
                     {groups.length === 0 ? (
                         <div className="card empty-state">
-                            <div className="empty-icon">🏠</div>
+                            <div className="empty-icon"><Home /></div>
                             <p>No groups yet. Create your first group!</p>
                         </div>
                     ) : (
@@ -166,7 +166,7 @@ export default function Groups() {
                                             onClick={() => handleDelete(g)}
                                             title="Delete group"
                                         >
-                                            🗑️
+                                            <Trash2 size={15} />
                                         </button>
                                     </div>
                                     <div className="avatar-stack">
@@ -181,7 +181,7 @@ export default function Groups() {
                                             </div>
                                         ))}
                                         {(g.members || []).length > 5 && (
-                                            <div className="avatar" style={{ background: '#374151', fontSize: 10 }}>
+                                            <div className="avatar" style={{ background: 'var(--text-muted)', fontSize: 10 }}>
                                                 +{g.members.length - 5}
                                             </div>
                                         )}

@@ -7,11 +7,12 @@ import {
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { useToast } from '../components/ToastContext';
+import { Receipt, ArrowUp, FileText, Trash2, Plus } from 'lucide-react';
 import * as api from '../api';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const COLORS = ['#6366f1', '#06b6d4', '#a855f7', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
+const COLORS = ['#6366f1', '#06b6d4', '#7c3aed', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 
 export default function Expenses() {
     const [groups, setGroups] = useState([]);
@@ -56,9 +57,7 @@ export default function Expenses() {
     }
 
     function getUserName(idOrObj) {
-        // Handle populated object (from backend .populate())
         if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
-        // Fallback: look up in users array
         const found = users.find((u) => u._id === idOrObj);
         return found?.name || `...${String(idOrObj)?.slice(-6)}`;
     }
@@ -110,7 +109,6 @@ export default function Expenses() {
         }
     }
 
-    // Chart data: amount per payer for selected group
     const payerMap = {};
     expenses.forEach((e) => {
         const name = getUserName(e.paidBy);
@@ -135,12 +133,11 @@ export default function Expenses() {
         plugins: {
             legend: {
                 position: 'bottom',
-                labels: { color: '#9ca3c7', padding: 14, font: { family: 'Inter', size: 12 } },
+                labels: { color: 'var(--text-secondary)', padding: 14, font: { family: 'Inter', size: 12 } },
             },
         },
     };
 
-    // Get members of selected group for participant list
     const currentGroup = groups.find((g) => g._id === selectedGroup);
     const groupMembers = currentGroup
         ? users.filter((u) => {
@@ -186,7 +183,7 @@ export default function Expenses() {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Amount (₹)</label>
+                                    <label>Amount</label>
                                     <input
                                         type="number"
                                         placeholder="0.00"
@@ -230,11 +227,10 @@ export default function Expenses() {
                                 </div>
                             </div>
 
-                            <button type="submit" className="btn btn-primary">💸 Add Expense</button>
+                            <button type="submit" className="btn btn-primary"><Plus size={16} /> Add Expense</button>
                         </form>
                     </div>
 
-                    {/* Pie chart */}
                     {expenses.length > 0 && (
                         <div className="chart-container">
                             <h3>Who Paid What</h3>
@@ -257,12 +253,12 @@ export default function Expenses() {
 
                     {!selectedGroup ? (
                         <div className="card empty-state">
-                            <div className="empty-icon">👆</div>
+                            <div className="empty-icon"><ArrowUp /></div>
                             <p>Select a group to view expenses</p>
                         </div>
                     ) : expenses.length === 0 ? (
                         <div className="card empty-state">
-                            <div className="empty-icon">📝</div>
+                            <div className="empty-icon"><FileText /></div>
                             <p>No expenses in this group yet</p>
                         </div>
                     ) : (
@@ -277,25 +273,25 @@ export default function Expenses() {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent-light)' }}>
-                                                ₹{e.amount}
+                                            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>
+                                                {e.amount}
                                             </div>
                                             <button
                                                 className="btn btn-danger btn-sm"
                                                 onClick={() => handleDelete(e)}
                                                 title="Delete expense"
                                             >
-                                                🗑️
+                                                <Trash2 size={15} />
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             ))}
 
-                            <div className="item-card" style={{ textAlign: 'center', background: 'rgba(99, 102, 241, 0.06)' }}>
+                            <div className="item-card" style={{ textAlign: 'center', background: 'var(--accent-subtle)' }}>
                                 <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Total</div>
-                                <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--accent-light)' }}>
-                                    ₹{expenses.reduce((s, e) => s + e.amount, 0).toLocaleString()}
+                                <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--accent)' }}>
+                                    {expenses.reduce((s, e) => s + e.amount, 0).toLocaleString()}
                                 </div>
                             </div>
                         </div>

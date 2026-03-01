@@ -7,11 +7,12 @@ import {
     Legend,
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
+import { Users, Home, Receipt, IndianRupee, FileText, PieChart } from 'lucide-react';
 import * as api from '../api';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const COLORS = ['#6366f1', '#06b6d4', '#a855f7', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
+const COLORS = ['#6366f1', '#06b6d4', '#7c3aed', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 
 export default function Dashboard() {
     const [stats, setStats] = useState({ users: [], groups: 0, expenses: [], totalAmount: 0 });
@@ -49,14 +50,11 @@ export default function Dashboard() {
     }, []);
 
     function getUserName(idOrObj) {
-        // Handle populated object
         if (idOrObj && typeof idOrObj === 'object' && idOrObj.name) return idOrObj.name;
-        // Fallback: look up in users array
         const found = stats.users.find((u) => u._id === idOrObj);
         return found?.name || `...${String(idOrObj)?.slice(-6)}`;
     }
 
-    // Doughnut chart: expenses by payer
     const payerMap = {};
     stats.expenses.forEach((e) => {
         const name = getUserName(e.paidBy);
@@ -81,7 +79,7 @@ export default function Dashboard() {
         plugins: {
             legend: {
                 position: 'bottom',
-                labels: { color: '#9ca3c7', padding: 16, font: { family: 'Inter', size: 12 } },
+                labels: { color: 'var(--text-secondary)', padding: 16, font: { family: 'Inter', size: 12 } },
             },
         },
     };
@@ -97,23 +95,23 @@ export default function Dashboard() {
 
             <div className="stats-grid">
                 <div className="stat-card" onClick={() => navigate('/users')} style={{ cursor: 'pointer' }}>
-                    <div className="stat-icon purple">👥</div>
+                    <div className="stat-icon purple"><Users /></div>
                     <div className="stat-value">{stats.users.length}</div>
                     <div className="stat-label">Total Users</div>
                 </div>
                 <div className="stat-card" onClick={() => navigate('/groups')} style={{ cursor: 'pointer' }}>
-                    <div className="stat-icon cyan">🏠</div>
+                    <div className="stat-icon cyan"><Home /></div>
                     <div className="stat-value">{stats.groups}</div>
                     <div className="stat-label">Groups</div>
                 </div>
                 <div className="stat-card" onClick={() => navigate('/expenses')} style={{ cursor: 'pointer' }}>
-                    <div className="stat-icon pink">💸</div>
+                    <div className="stat-icon pink"><Receipt /></div>
                     <div className="stat-value">{stats.expenses.length}</div>
                     <div className="stat-label">Expenses</div>
                 </div>
                 <div className="stat-card" onClick={() => navigate('/balances')} style={{ cursor: 'pointer' }}>
-                    <div className="stat-icon green">💰</div>
-                    <div className="stat-value">₹{stats.totalAmount.toLocaleString()}</div>
+                    <div className="stat-icon green"><IndianRupee /></div>
+                    <div className="stat-value">{stats.totalAmount.toLocaleString()}</div>
                     <div className="stat-label">Total Spent</div>
                 </div>
             </div>
@@ -123,7 +121,7 @@ export default function Dashboard() {
                     <h3 className="section-title">Recent Expenses</h3>
                     {stats.expenses.length === 0 ? (
                         <div className="card empty-state">
-                            <div className="empty-icon">📝</div>
+                            <div className="empty-icon"><FileText /></div>
                             <p>No expenses yet. Add some to get started!</p>
                         </div>
                     ) : (
@@ -134,7 +132,7 @@ export default function Dashboard() {
                                         <div className="item-name">{e.description || 'Expense'}</div>
                                         <div className="item-detail">Paid by: {getUserName(e.paidBy)}</div>
                                     </div>
-                                    <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent-light)' }}>
+                                    <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--accent)' }}>
                                         ₹{e.amount}
                                     </div>
                                 </div>
@@ -151,7 +149,7 @@ export default function Dashboard() {
                         </div>
                     ) : (
                         <div className="empty-state">
-                            <div className="empty-icon">📊</div>
+                            <div className="empty-icon"><PieChart /></div>
                             <p>Chart will appear when expenses are added</p>
                         </div>
                     )}

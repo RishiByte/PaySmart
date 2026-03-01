@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '../components/ToastContext';
+import { Plus, Trash2, UserRound, Loader } from 'lucide-react';
 import * as api from '../api';
 
-const AVATAR_COLORS = ['#6366f1', '#06b6d4', '#a855f7', '#ec4899', '#f59e0b', '#10b981'];
+const AVATAR_COLORS = ['#6366f1', '#06b6d4', '#7c3aed', '#ec4899', '#f59e0b', '#10b981'];
 
 export default function Users() {
     const [users, setUsers] = useState([]);
@@ -87,7 +88,7 @@ export default function Users() {
                             />
                         </div>
                         <button type="submit" className="btn btn-primary" disabled={submitting}>
-                            {submitting ? '⏳ Creating...' : '➕ Create User'}
+                            {submitting ? <><Loader size={16} /> Creating...</> : <><Plus size={16} /> Create User</>}
                         </button>
                     </form>
                 </div>
@@ -101,7 +102,7 @@ export default function Users() {
                     </h3>
                     {users.length === 0 ? (
                         <div className="card empty-state">
-                            <div className="empty-icon">👤</div>
+                            <div className="empty-icon"><UserRound /></div>
                             <p>No users yet. Create your first user!</p>
                         </div>
                     ) : (
@@ -123,7 +124,7 @@ export default function Users() {
                                         onClick={() => handleDelete(u)}
                                         title="Delete user"
                                     >
-                                        🗑️
+                                        <Trash2 size={15} />
                                     </button>
                                 </div>
                             ))}
