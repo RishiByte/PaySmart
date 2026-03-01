@@ -257,8 +257,7 @@ Deliverables:
 # 12. Demo & Video
 
 Live Demo Link:
-https://vercel.com/rishi-bhardwajs-projects-b48ff5c6/pay-smart-fcnm/434uBGevDFBuoSRbNmw2SHwcWSML
-
+https://pay-smart-fcnm-git-main-rishi-bhardwajs-projects-b48ff5c6.vercel.app/
 Demo Video Link:
 https://drive.google.com/file/d/11SdNYRbWwYrLPzB0ra4vAw_SEk7N3ttx/view?usp=sharing
 
