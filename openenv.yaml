@@ -1,0 +1,25 @@
+name: debt-split-optimizer
+version: "1.0.0"
+description: >
+  A Reinforcement Learning environment where an AI agent learns to settle
+  peer-to-peer debts optimally, minimizing the number of transactions.
+author: "AI Engineer"
+tasks:
+  - id: task1
+    name: "Basic Debt Settlement"
+    difficulty: beginner
+    users: 3-4
+    description: "Settle integer debts among a small group in minimum moves."
+  - id: task2
+    name: "Constrained Settlement"
+    difficulty: intermediate
+    users: 6-8
+    description: "Settle floating-point debts with direct-payment restrictions."
+  - id: task3
+    name: "Fee-Optimized Settlement"
+    difficulty: advanced
+    users: 10+
+    description: "Minimize total transaction fees while settling all debts."
+reward_range: [-0.5, 2.0]
+action_space: "continuous (payer, payee, amount)"
+observation_space: "dict of user balances"
